@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePlants } from "../context/PlantContext";
 import {
   View,
   Text,
@@ -13,6 +14,7 @@ export default function AddPlant({ navigation }) {
   const [name, setName] = useState("");
   const [type, setType] = useState("");
   const [location, setLocation] = useState("");
+  const { addPlant } = usePlants();
 
 function savePlant() {
   if (!name.trim()) {
@@ -24,9 +26,15 @@ function savePlant() {
     return;
   }
 
+  addPlant({
+    name: name.trim(),
+    type: type.trim(),
+    location: location.trim(),
+  });
+
   if (typeof window !== "undefined") {
     window.alert(
-      "Растение добавлено. В прототипе данные пока не сохраняются на сервере."
+      "Растение добавлено. Данные временно сохраняются в приложении до перезагрузки."
     );
     navigation.navigate("Dashboard");
     return;
@@ -34,7 +42,7 @@ function savePlant() {
 
   Alert.alert(
     "Растение добавлено",
-    "В прототипе данные пока не сохраняются на сервере.",
+    "Данные временно сохраняются в приложении до перезагрузки.",
     [
       {
         text: "ОК",

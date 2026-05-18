@@ -1,10 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { mockPlants } from "../data/mockData";
+import { usePlants } from "../context/PlantContext";
 
 export default function Monitor({ route }) {
   const plantId = route?.params?.plantId;
-  const plant = mockPlants.find((item) => item.id === plantId) || mockPlants[0];
+  const { plants, getPlantById } = usePlants();
+  const plant = getPlantById(plantId) || plants[0];
 
   const getStatusText = () => {
     if (plant.status === "normal") return "Состояние растения в норме";

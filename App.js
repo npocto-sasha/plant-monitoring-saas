@@ -1,5 +1,6 @@
 import React from "react";
 
+import { PlantProvider } from "./context/PlantContext";
 import User from "./Screens/User";
 import Devices from "./Screens/Devices";
 import Dashboard from "./Screens/Dashboard";
@@ -106,8 +107,10 @@ function App() {
 
 export default () => {
   return (
-    <NavigationContainer>
-      <App />
-    </NavigationContainer>
+    <PlantProvider>
+      <NavigationContainer>
+        <App />
+      </NavigationContainer>
+    </PlantProvider>
   );
 };

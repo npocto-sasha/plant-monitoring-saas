@@ -9,10 +9,11 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Footer from "../Components/Footer";
-import { mockPlants } from "../data/mockData";
+import { usePlants } from "../context/PlantContext";
 
 export default function Dashboard() {
   const navigation = useNavigation();
+  const { plants } = usePlants();
 
   function openPlant(plant) {
     navigation.navigate("Monitor", {
@@ -106,7 +107,7 @@ export default function Dashboard() {
     </View>   
 
         <FlatList
-          data={mockPlants}
+          data={plants}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <PlantCard item={item} />}
           contentContainerStyle={styles.listContent}
