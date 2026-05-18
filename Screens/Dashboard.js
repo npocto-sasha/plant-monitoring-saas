@@ -87,6 +87,24 @@ export default function Dashboard() {
           </Text>
         </View>
 
+    <View style={styles.header}>
+      <View style={styles.headerTop}>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>Мои растения</Text>
+          <Text style={styles.subtitle}>
+            Мониторинг состояния растений и данных с ESP32
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate("AddPlant")}
+        >
+          <Text style={styles.addButtonText}>+</Text>
+        </TouchableOpacity>
+      </View>
+    </View>   
+
         <FlatList
           data={mockPlants}
           keyExtractor={(item) => item.id}
@@ -214,5 +232,28 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
+  },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  headerText: {
+    flex: 1,
+  },
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#115FF9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addButtonText: {
+    color: "#FFFFFF",
+    fontSize: 28,
+    fontWeight: "700",
+    lineHeight: 32,
   },
 });

@@ -6,6 +6,7 @@ import Dashboard from "./Screens/Dashboard";
 import Monitor from "./Screens/Monitor";
 import Notifi from "./Screens/Notifi";
 import TestModal from "./Screens/TestModal";
+import AddPlant from "./Screens/AddPlant";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -30,6 +31,22 @@ function App() {
         component={Dashboard}
         options={{
           headerShown: false,
+        }}
+      />
+
+      <Stack.Screen
+        name="AddPlant"
+        component={AddPlant}
+        options={{
+        title: "Новое растение",
+        headerTintColor: "#115ff9",
+        headerTitleStyle: {
+          fontWeight: "bold",
+          fontSize: 22,
+          color: "#115ff9",
+        },
+          headerTitleAlign: "center",
+          headerBackTitleVisible: false,
         }}
       />
 
