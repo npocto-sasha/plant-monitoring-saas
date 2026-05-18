@@ -1,143 +1,218 @@
-import React, { useLayoutEffect, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Image,
   Dimensions,
 } from "react-native";
-
-import { getToken } from "../Components/ResHandler";
-import { DeviceService } from "../Components/ResHandler";
-import Footer from "../Components/Footer";
-
 import { useNavigation } from "@react-navigation/native";
+import Footer from "../Components/Footer";
+import { mockPlants } from "../data/mockData";
 
 export default function Dashboard() {
   const navigation = useNavigation();
-  const [devices, setDevices] = useState();
-  async function getDev() {
-    await getToken();
-    const dev = await DeviceService.getMyDevices();
-    console.log(dev);
-    var temp = dev;
-    setDevices(temp);
+
+  function openPlant(plant) {
+    navigation.navigate("Monitor", {
+      plantId: plant.id,
+      plantName: plant.name,
+    });
   }
-  useLayoutEffect(() => {
-    getDev();
-  }, []);
-  function about(devId, name) {
-    navigation.navigate("Monitor", { device_id: devId, name: name });
-  }
-  const keyExtractor = (item) => item.id;
-  const ListItem = ({ data }) => {
+
+  const getStatusStyle = (status) => {
+    if (status === "normal") return styles.statusNormal;
+    if (status === "warning") return styles.statusWarning;
+    if (status === "risk") return styles.statusRisk;
+    return styles.statusNormal;
+  };
+
+  const PlantCard = ({ item }) => {
     return (
-      <View style={styles.item}>
-        <Text style={styles.itemText}>Название: {data.name}</Text>
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View>
+            <Text style={styles.plantName}>{item.name}</Text>
+            <Text style={styles.plantMeta}>
+              {item.type} · {item.location}
+            </Text>
+          </View>
+
+          <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
+            <Text style={styles.statusText}>{item.statusText}</Text>
+          </View>
+        </View>
+
+        <View style={styles.metricsRow}>
+          <View style={styles.metricBox}>
+            <Text style={styles.metricValue}>
+              {item.telemetry.soilMoisture}%
+            </Text>
+            <Text style={styles.metricLabel}>Влажность</Text>
+          </View>
+
+          <View style={styles.metricBox}>
+            <Text style={styles.metricValue}>
+              {item.telemetry.temperature}°C
+            </Text>
+            <Text style={styles.metricLabel}>Температура</Text>
+          </View>
+
+          <View style={styles.metricBox}>
+            <Text style={styles.metricValue}>{item.telemetry.light} lx</Text>
+            <Text style={styles.metricLabel}>Свет</Text>
+          </View>
+        </View>
+
+        <Text style={styles.recommendation}>{item.recommendation}</Text>
+
         <TouchableOpacity
-          style={styles.itemAboutBtn}
-          onPress={() => {
-            about(data.number, data.name);
-          }}
+          style={styles.detailsButton}
+          onPress={() => openPlant(item)}
         >
-          <Text style={styles.itemAboutText}>Подробнее</Text>
+          <Text style={styles.detailsButtonText}>Подробнее</Text>
         </TouchableOpacity>
       </View>
     );
   };
+
   return (
-    <View style={{ flex: 1 }}>
-      <View
-        style={{
-          marginTop: 50,
-          height: 65,
-          flexDirection: "row",
-          justifyContent: "space-between",
-        }}
-      >
-        <Text
-          style={{
-            marginLeft: 18,
-            color: "#115FF9",
-            fontSize: 24,
-            fontWeight: "bold",
-            marginTop: 10,
-          }}
-        >
-          Дэшборд
-        </Text>
-        <TouchableOpacity
-          onPress={() => {
-            navigation.navigate("User");
-          }}
-          style={{ marginRight: 10 }}
-        >
-          <Image
-            style={{ width: 55.7, height: 56 }}
-            source={require("../assets/User.png")}
-          />
-        </TouchableOpacity>
-      </View>
+    <View style={styles.screen}>
       <View style={styles.body}>
-        {devices ? (
-          <FlatList
-            data={devices}
-            keyExtractor={keyExtractor}
-            renderItem={({ item }) => <ListItem data={item} />}
-          />
-        ) : (
-          <Text style={styles.noDevice}>
-            Похоже у вас нет {"\n"}устройств {":("}
+        <View style={styles.header}>
+          <Text style={styles.title}>Мои растения</Text>
+          <Text style={styles.subtitle}>
+            Мониторинг состояния растений и данных с ESP32
           </Text>
-        )}
+        </View>
+
+        <FlatList
+          data={mockPlants}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <PlantCard item={item} />}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
       </View>
+
       <Footer />
     </View>
   );
 }
+
 const styles = StyleSheet.create({
-  item: {
-    width: 350,
-    height: 156,
-    backgroundColor: "#115FF9",
-    marginHorizontal: "auto",
-    marginVertical: 8,
-    borderRadius: 15,
-    paddingTop: 24,
-  },
-  itemText: {
-    color: "white",
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginTop: 3,
-  },
-  itemAboutBtn: {
-    width: 155,
-    height: 45,
-    backgroundColor: "#F5F5F5",
-    marginHorizontal: "auto",
-    borderRadius: 5,
-    marginVertical: 15,
-  },
-  itemAboutText: {
-    color: "#115FF9",
-    fontSize: 24,
-    fontWeight: "Light",
-    textAlign: "center",
-    marginVertical: 5,
-  },
-  noDevice: {
-    marginVertical: "auto",
-    color: "#115FF9",
-    fontWeight: "semibold",
-    fontSize: 24,
-    textAlign: "center",
-    paddingBottom: 80,
+  screen: {
+    flex: 1,
+    backgroundColor: "#F4F7FB",
   },
   body: {
-    height: Dimensions.get("screen").height - 115 - 83,
+    height: Dimensions.get("screen").height - 83,
+    paddingHorizontal: 16,
+  },
+  header: {
+    paddingTop: 24,
+    paddingBottom: 16,
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#16213E",
+  },
+  subtitle: {
+    marginTop: 6,
+    fontSize: 15,
+    color: "#6B7280",
+    lineHeight: 21,
+  },
+  listContent: {
+    paddingBottom: 24,
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  plantName: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#16213E",
+  },
+  plantMeta: {
+    marginTop: 4,
+    fontSize: 14,
+    color: "#6B7280",
+  },
+  statusBadge: {
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  statusNormal: {
+    backgroundColor: "#DFF7E8",
+  },
+  statusWarning: {
+    backgroundColor: "#FFF3CD",
+  },
+  statusRisk: {
+    backgroundColor: "#F8D7DA",
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#16213E",
+  },
+  metricsRow: {
+    flexDirection: "row",
+    marginTop: 16,
+    gap: 8,
+  },
+  metricBox: {
+    flex: 1,
+    backgroundColor: "#F4F7FB",
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: "center",
+  },
+  metricValue: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#115FF9",
+  },
+  metricLabel: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  recommendation: {
+    marginTop: 14,
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#374151",
+  },
+  detailsButton: {
+    marginTop: 14,
+    backgroundColor: "#115FF9",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  detailsButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
