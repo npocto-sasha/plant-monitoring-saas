@@ -1,255 +1,184 @@
-import React, { useEffect, useState } from "react";
-
-import { View, StyleSheet, Text, Switch } from "react-native";
-
-import mqtt from "mqtt";
+import React from "react";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { mockPlants } from "../data/mockData";
 
 export default function Monitor({ route }) {
-  const [name, setName] = useState("Название");
-  const [id, setId] = useState(0);
-  const client = mqtt.connect("ws://95.163.228.174:9001/ws", {
-    username: "gigatech",
-    password: "gigatechthebest",
-  });
-  function publish(num) {
-    var body;
-    if (num == 1) {
-      body = JSON.stringify({
-        cooler: !vent,
-        door: door,
-        led: lamp,
-        pump: nasos,
-      });
-    } else if (num == 2) {
-      body = JSON.stringify({
-        cooler: vent,
-        door: !door,
-        led: lamp,
-        pump: nasos,
-      });
-    } else if (num == 3) {
-      body = JSON.stringify({
-        cooler: vent,
-        door: door,
-        led: !lamp,
-        pump: nasos,
-      });
-    } else if (num == 4) {
-      body = JSON.stringify({
-        cooler: vent,
-        door: door,
-        led: lamp,
-        pump: !nasos,
-      });
-    }
+  const plantId = route?.params?.plantId;
+  const plant = mockPlants.find((item) => item.id === plantId) || mockPlants[0];
 
-    var topic = id + "_controls";
-
-    console.log(body);
-
-    client.publish(topic, body);
-  }
-
-  useEffect(() => {
-    setId(route.params.device_id);
-    setName(route.params.name);
-    if (!id) return;
-
-    client.subscribe(id, {}, (err) => {
-      if (err) {
-        console.error(`Subscribe to ${id} failed:`, err);
-      } else {
-        console.log(`Subscribed to ${id}`);
-      }
-    });
-    client.subscribe(id + "_controls", {}, (err) => {
-      if (err) {
-        console.error(`Subscribe to ${id + "_controls"} failed:`, err);
-      } else {
-        console.log(`Subscribed to ${id + "_controls"}`);
-      }
-    });
-
-    client.on("connect", () => {
-      console.log("Connected to MQTT Broker!");
-    });
-    client.on("error", (err) => {
-      console.error("Connection to MQTT Broker failed:", err);
-    });
-
-    client.on("message", (topic, message) => {
-      if (topic === id) {
-        console.log(message);
-        const indications = JSON.parse(message.toString());
-        setLight(indications.light);
-        setHumidity(indications.humidity);
-        setTemp(indications.temp);
-      }
-    });
-
-    client.on("message", (topic, message) => {
-      if (topic === id + "_controls") {
-        const controls = JSON.parse(message.toString());
-        console.log(controls);
-        setLamp(controls.led);
-        setNasos(controls.pump);
-        setVent(controls.cooler);
-        setDoor(controls.door);
-      }
-    });
-    return () => {
-      client.unsubscribe(id, (err) => {
-        if (err) {
-          console.error(`Unsubscribe from ${id} failed:`, err);
-        } else {
-          console.log(`Unsubscribed from ${id}`);
-        }
-      });
-      client.unsubscribe(id + "_controls", (err) => {
-        if (err) {
-          console.error(`Unsubscribe from ${id + "_controls"} failed:`, err);
-        } else {
-          console.log(`Unsubscribed from ${id + "_controls"}`);
-        }
-      });
-
-      client.end;
-    };
-  }, [id]);
-
-  const [light, setLight] = useState(0);
-  const [humidity, setHumidity] = useState(0);
-  const [temp, setTemp] = useState(0);
-
-  const [lamp, setLamp] = useState(false);
-  const [nasos, setNasos] = useState(false);
-  const [vent, setVent] = useState(false);
-  const [door, setDoor] = useState(false);
+  const getStatusText = () => {
+    if (plant.status === "normal") return "Состояние растения в норме";
+    if (plant.status === "warning") return "Требуется внимание";
+    if (plant.status === "risk") return "Высокий риск";
+    return "Нет данных";
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.devTitle}>{name + "\n" + "ID: " + id}</Text>
-      <Text style={styles.blckTitle}>Показания</Text>
-      <View style={styles.blckContainer}>
-        <View style={styles.block}>
-          <Text style={styles.info}>
-            Освещенность
-            {"\n" + light + " "}
-            люмин
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <View style={styles.headerCard}>
+        <Text style={styles.title}>{plant.name}</Text>
+        <Text style={styles.subtitle}>
+          {plant.type} · {plant.location}
+        </Text>
+
+        <View style={styles.statusBox}>
+          <Text style={styles.statusLabel}>Текущий статус</Text>
+          <Text style={styles.statusValue}>{getStatusText()}</Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Показатели датчиков</Text>
+
+        <View style={styles.metricCard}>
+          <Text style={styles.metricLabel}>Влажность почвы</Text>
+          <Text style={styles.metricValue}>
+            {plant.telemetry.soilMoisture}%
+          </Text>
+          <Text style={styles.metricHint}>
+            Определяет необходимость полива растения.
           </Text>
         </View>
-        <View style={styles.block}>
-          <Text style={styles.info}>
-            Влажность
-            {"\n" + humidity + " "}%
+
+        <View style={styles.metricCard}>
+          <Text style={styles.metricLabel}>Температура воздуха</Text>
+          <Text style={styles.metricValue}>
+            {plant.telemetry.temperature}°C
+          </Text>
+          <Text style={styles.metricHint}>
+            Помогает определить, находится ли растение в комфортных условиях.
           </Text>
         </View>
-        <View style={styles.block}>
-          <Text style={styles.info}>
-            Температура
-            {"\n" + temp + " "}
-            °C
+
+        <View style={styles.metricCard}>
+          <Text style={styles.metricLabel}>Освещенность</Text>
+          <Text style={styles.metricValue}>{plant.telemetry.light} lx</Text>
+          <Text style={styles.metricHint}>
+            Показывает, достаточно ли света получает растение.
           </Text>
         </View>
       </View>
 
-      <Text style={styles.blckTitle}>Управление</Text>
-      <View style={styles.blckContainer}>
-        <View style={styles.block}>
-          <Text style={styles.info}>Свет</Text>
-          <Switch
-            style={styles.Switch}
-            value={lamp}
-            thumbColor={"white"}
-            trackColor={{ false: "#999", true: "#7AA7FF" }}
-            onValueChange={() => {
-              setLamp(!lamp);
-              publish(3);
-            }}
-          />
-        </View>
-        <View style={styles.block}>
-          <Text style={styles.info}>Насос</Text>
-          <Switch
-            style={styles.Switch}
-            value={nasos}
-            thumbColor={"white"}
-            trackColor={{ false: "#999", true: "#7AA7FF" }}
-            onValueChange={() => {
-              setNasos(!nasos);
-              publish(4);
-            }}
-          />
-        </View>
-        <View style={styles.block}>
-          <Text style={styles.info}>Вентилятор</Text>
-          <Switch
-            style={styles.Switch}
-            value={vent}
-            thumbColor={"white"}
-            trackColor={{ false: "#999", true: "#7AA7FF" }}
-            onValueChange={() => {
-              setVent(!vent);
-              publish(1);
-            }}
-          />
-        </View>
-        <View style={styles.block}>
-          <Text style={styles.info}>Дверь</Text>
-          <Switch
-            style={styles.Switch}
-            value={door}
-            thumbColor={"white"}
-            trackColor={{ false: "#999", true: "#7AA7FF" }}
-            onValueChange={() => {
-              setDoor(!door);
-              publish(2);
-            }}
-          />
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Рекомендация</Text>
+        <View style={styles.recommendationCard}>
+          <Text style={styles.recommendationText}>{plant.recommendation}</Text>
         </View>
       </View>
-    </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Устройство</Text>
+        <View style={styles.deviceCard}>
+          <Text style={styles.deviceLabel}>ESP32</Text>
+          <Text style={styles.deviceValue}>
+            {plant.deviceId ? plant.deviceId : "Устройство не подключено"}
+          </Text>
+        </View>
+      </View>
+    </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-    paddingHorizontal: 12,
-    backgroundColor: "white",
-    height: "100%",
+  screen: {
+    flex: 1,
+    backgroundColor: "#F4F7FB",
   },
-  block: {
-    width: 170,
-    height: 90,
-    backgroundColor: "#115FF9",
-    marginVertical: 6,
-    borderRadius: 15,
+  content: {
+    padding: 16,
+    paddingBottom: 32,
   },
-  info: {
-    fontSize: 24,
-    color: "white",
-    textAlign: "center",
-    marginVertical: "auto",
+  headerCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 18,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
-  blckContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
+  title: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#16213E",
   },
-  blckTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#525252",
+  subtitle: {
+    marginTop: 6,
+    fontSize: 15,
+    color: "#6B7280",
+  },
+  statusBox: {
+    marginTop: 18,
+    borderRadius: 14,
+    backgroundColor: "#EEF4FF",
+    padding: 14,
+  },
+  statusLabel: {
+    fontSize: 13,
+    color: "#6B7280",
+  },
+  statusValue: {
+    marginTop: 4,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#115FF9",
+  },
+  section: {
+    marginBottom: 18,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#16213E",
     marginBottom: 10,
   },
-  devTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#115FF9",
-    textAlign: "center",
-    marginVertical: 20,
+  metricCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 10,
   },
-  Switch: {
-    marginHorizontal: "auto",
+  metricLabel: {
+    fontSize: 15,
+    color: "#6B7280",
+  },
+  metricValue: {
+    marginTop: 6,
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#115FF9",
+  },
+  metricHint: {
+    marginTop: 6,
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#374151",
+  },
+  recommendationCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+  },
+  recommendationText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#374151",
+  },
+  deviceCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+  },
+  deviceLabel: {
+    fontSize: 15,
+    color: "#6B7280",
+  },
+  deviceValue: {
+    marginTop: 6,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#16213E",
   },
 });
