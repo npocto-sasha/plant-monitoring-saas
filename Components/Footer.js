@@ -30,6 +30,14 @@ export default function Footer() {
         <Text style={styles.icon}>💡</Text>
         <Text style={styles.text}>Советы</Text>
       </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={styles.footerItem}
+        onPress={() => navigation.navigate("User")}
+      >
+        <Text style={styles.icon}>⚙️</Text>
+        <Text style={styles.text}>Профиль</Text>
+      </TouchableOpacity>
     </View>
   );
 }

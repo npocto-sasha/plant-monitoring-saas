@@ -59,7 +59,6 @@ function AppNavigator() {
       <Stack.Screen
         name="User"
         component={User}
-        initialParams={{ user: mockUser, logOut }}
       />
     </Stack.Navigator>
   );
