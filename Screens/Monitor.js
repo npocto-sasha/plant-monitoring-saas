@@ -1,11 +1,165 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { usePlants } from "../context/PlantContext";
+import Svg, { Polyline, Circle, Line, Text as SvgText } from "react-native-svg";
 
 export default function Monitor({ route }) {
   const plantId = route?.params?.plantId;
   const { plants, getPlantById } = usePlants();
   const plant = getPlantById(plantId) || plants[0];
+
+  const renderLineChart = (metric, unit, title) => {
+  const history = plant.telemetryHistory || [];
+
+  if (history.length === 0) {
+    return (
+      <View style={styles.emptyHistoryCard}>
+        <Text style={styles.emptyHistoryTitle}>Недостаточно данных</Text>
+        <Text style={styles.emptyHistoryText}>
+          График появится после получения измерений с ESP32-устройства.
+        </Text>
+      </View>
+    );
+  }
+
+  const chartWidth = 320;
+  const chartHeight = 180;
+
+  const paddingLeft = 48;
+  const paddingRight = 18;
+  const paddingTop = 18;
+  const paddingBottom = 34;
+
+  const values = history.map((item) => Number(item[metric]));
+  const minRaw = Math.min(...values);
+  const maxRaw = Math.max(...values);
+
+  const range = maxRaw - minRaw === 0 ? 1 : maxRaw - minRaw;
+  const minValue = Math.floor(minRaw - range * 0.15);
+  const maxValue = Math.ceil(maxRaw + range * 0.15);
+  const safeRange = maxValue - minValue === 0 ? 1 : maxValue - minValue;
+
+  const plotWidth = chartWidth - paddingLeft - paddingRight;
+  const plotHeight = chartHeight - paddingTop - paddingBottom;
+
+  const yTicks = [
+    maxValue,
+    Math.round((maxValue + minValue) / 2),
+    minValue,
+  ];
+
+  const getX = (index) =>
+    paddingLeft + (index * plotWidth) / Math.max(history.length - 1, 1);
+
+  const getY = (value) =>
+    paddingTop + ((maxValue - value) / safeRange) * plotHeight;
+
+  const points = history.map((item, index) => ({
+    x: getX(index),
+    y: getY(Number(item[metric])),
+    value: item[metric],
+    time: item.time,
+  }));
+
+  const pointsString = points.map((point) => `${point.x},${point.y}`).join(" ");
+
+  return (
+    <View style={styles.lineChartCard}>
+      <View style={styles.lineChartHeader}>
+        <Text style={styles.chartTitle}>{title}</Text>
+        <Text style={styles.chartRange}>
+          {minRaw}
+          {unit} — {maxRaw}
+          {unit}
+        </Text>
+      </View>
+
+      <Svg
+        width="100%"
+        height={chartHeight}
+        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+      >
+        {yTicks.map((tick, index) => {
+          const y = getY(tick);
+
+          return (
+            <React.Fragment key={`${metric}-tick-${index}`}>
+              <Line
+                x1={paddingLeft}
+                y1={y}
+                x2={chartWidth - paddingRight}
+                y2={y}
+                stroke="#E5E7EB"
+                strokeWidth="1"
+              />
+
+              <SvgText
+                x={paddingLeft - 8}
+                y={y + 4}
+                fontSize="10"
+                fill="#6B7280"
+                textAnchor="end"
+              >
+                {tick}
+                {unit}
+              </SvgText>
+            </React.Fragment>
+          );
+        })}
+
+        <Line
+          x1={paddingLeft}
+          y1={paddingTop}
+          x2={paddingLeft}
+          y2={chartHeight - paddingBottom}
+          stroke="#D1D5DB"
+          strokeWidth="1"
+        />
+
+        <Line
+          x1={paddingLeft}
+          y1={chartHeight - paddingBottom}
+          x2={chartWidth - paddingRight}
+          y2={chartHeight - paddingBottom}
+          stroke="#D1D5DB"
+          strokeWidth="1"
+        />
+
+        <Polyline
+          points={pointsString}
+          fill="none"
+          stroke="#115FF9"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {points.map((point, index) => (
+          <Circle
+            key={`${metric}-point-${index}`}
+            cx={point.x}
+            cy={point.y}
+            r="4"
+            fill="#115FF9"
+          />
+        ))}
+
+        {points.map((point, index) => (
+          <SvgText
+            key={`${metric}-time-${index}`}
+            x={point.x}
+            y={chartHeight - 10}
+            fontSize="10"
+            fill="#6B7280"
+            textAnchor="middle"
+          >
+            {point.time}
+          </SvgText>
+        ))}
+      </Svg>
+    </View>
+  );
+};
 
   const getStatusText = () => {
     if (plant.status === "normal") return "Состояние растения в норме";
@@ -65,6 +219,14 @@ export default function Monitor({ route }) {
         <View style={styles.recommendationCard}>
           <Text style={styles.recommendationText}>{plant.recommendation}</Text>
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Графики показателей</Text>
+
+        {renderLineChart("soilMoisture", "%", "Влажность почвы")}
+        {renderLineChart("temperature", "°C", "Температура воздуха")}
+        {renderLineChart("light", " lx", "Освещенность")}
       </View>
 
       <View style={styles.section}>
@@ -282,6 +444,35 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     lineHeight: 21,
+    color: "#6B7280",
+  },
+    chartTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#16213E",
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  lineChartCard: {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 16,
+  padding: 14,
+  marginBottom: 14,
+  },
+  lineChartHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+    gap: 12,
+  },
+  chartTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#16213E",
+  },
+  chartRange: {
+    fontSize: 13,
     color: "#6B7280",
   },
 });
