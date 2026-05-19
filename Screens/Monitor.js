@@ -161,6 +161,49 @@ export default function Monitor({ route }) {
   );
 };
 
+  const getTrendMessage = (metric, label, unit) => {
+    const history = plant.telemetryHistory || [];
+
+    if (history.length < 2) {
+      return {
+        title: label,
+        message: "Недостаточно данных для анализа динамики.",
+        status: "info",
+      };
+    }
+
+    const firstValue = Number(history[0][metric]);
+    const lastValue = Number(history[history.length - 1][metric]);
+    const difference = Number((lastValue - firstValue).toFixed(1));
+
+    if (Math.abs(difference) < 1) {
+      return {
+        title: label,
+        message: `Показатель остается стабильным: изменение составляет ${difference}${unit}.`,
+        status: "normal",
+      };
+    }
+
+    if (difference > 0) {
+      return {
+        title: label,
+        message: `Показатель увеличился на ${difference}${unit} за период наблюдения.`,
+        status: "normal",
+      };
+    }
+
+    return {
+      title: label,
+      message: `Показатель снизился на ${Math.abs(difference)}${unit} за период наблюдения.`,
+      status: "warning",
+    };
+  };
+
+  const getTrendStyle = (status) => {
+    if (status === "normal") return styles.trendNormal;
+    if (status === "warning") return styles.trendWarning;
+    return styles.trendInfo;
+  };
   const getStatusText = () => {
     if (plant.status === "normal") return "Состояние растения в норме";
     if (plant.status === "warning") return "Требуется внимание";
@@ -221,6 +264,24 @@ export default function Monitor({ route }) {
         </View>
       </View>
 
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Анализ динамики</Text>
+
+        {[
+          getTrendMessage("soilMoisture", "Влажность почвы", "%"),
+          getTrendMessage("temperature", "Температура воздуха", "°C"),
+          getTrendMessage("light", "Освещенность", " lx"),
+        ].map((trend, index) => (
+          <View
+            key={`trend-${index}`}
+            style={[styles.trendCard, getTrendStyle(trend.status)]}
+          >
+            <Text style={styles.trendTitle}>{trend.title}</Text>
+            <Text style={styles.trendMessage}>{trend.message}</Text>
+          </View>
+        ))}
+      </View>
+      
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Графики показателей</Text>
 
@@ -474,5 +535,30 @@ const styles = StyleSheet.create({
   chartRange: {
     fontSize: 13,
     color: "#6B7280",
+  },
+  trendCard: {
+  borderRadius: 16,
+  padding: 14,
+  marginBottom: 10,
+  },
+  trendNormal: {
+    backgroundColor: "#DFF7E8",
+  },
+  trendWarning: {
+    backgroundColor: "#FFF3CD",
+  },
+  trendInfo: {
+    backgroundColor: "#E5EDFD",
+  },
+  trendTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#16213E",
+  },
+  trendMessage: {
+    marginTop: 6,
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#374151",
   },
 });
