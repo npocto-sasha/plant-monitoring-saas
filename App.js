@@ -1,12 +1,12 @@
 import React from "react";
 
 import { PlantProvider } from "./context/PlantContext";
+
 import User from "./Screens/User";
 import Devices from "./Screens/Devices";
 import Dashboard from "./Screens/Dashboard";
 import Monitor from "./Screens/Monitor";
 import Notifi from "./Screens/Notifi";
-import TestModal from "./Screens/TestModal";
 import AddPlant from "./Screens/AddPlant";
 
 import { NavigationContainer } from "@react-navigation/native";
@@ -14,7 +14,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 const Stack = createNativeStackNavigator();
 
-function App() {
+function AppNavigator() {
   const mockUser = {
     id: "demo-user",
     name: "Demo User",
@@ -26,50 +26,30 @@ function App() {
   }
 
   return (
-    <Stack.Navigator initialRouteName="Dashboard">
-      <Stack.Screen
-        name="Dashboard"
-        component={Dashboard}
-        options={{
-          headerShown: false,
-        }}
-      />
+    <Stack.Navigator
+      initialRouteName="Dashboard"
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="Dashboard" component={Dashboard} />
+
+      <Stack.Screen name="AddPlant" component={AddPlant} />
+
+      <Stack.Screen name="Devices" component={Devices} />
+
+      <Stack.Screen name="Notification" component={Notifi} />
 
       <Stack.Screen
-        name="AddPlant"
-        component={AddPlant}
+        name="Monitor"
+        component={Monitor}
         options={{
-        title: "Новое растение",
-        headerTintColor: "#115ff9",
-        headerTitleStyle: {
-          fontWeight: "bold",
-          fontSize: 22,
-          color: "#115ff9",
-        },
-          headerTitleAlign: "center",
-          headerBackTitleVisible: false,
-        }}
-      />
-
-      <Stack.Screen
-        name="Devices"
-        component={Devices}
-        options={{
-          headerShown: false,
-        }}
-      />
-
-      <Stack.Screen
-        name="User"
-        component={User}
-        initialParams={{ user: mockUser, logOut }}
-        options={{
-          title: "Профиль",
-          headerTintColor: "#115ff9",
+          headerShown: true,
+          title: "Карточка растения",
+          headerTintColor: "#115FF9",
           headerTitleStyle: {
             fontWeight: "bold",
-            fontSize: 24,
-            color: "#115ff9",
+            color: "#115FF9",
           },
           headerTitleAlign: "center",
           headerBackTitleVisible: false,
@@ -77,40 +57,20 @@ function App() {
       />
 
       <Stack.Screen
-        name="Notification"
-        component={Notifi}
-        options={{
-          headerShown: false,
-        }}
-      />
-
-      <Stack.Screen
-        name="Monitor"
-        component={Monitor}
-        options={{
-          title: "",
-          headerTintColor: "#115ff9",
-        }}
-      />
-
-      <Stack.Screen
-        name="TestModal"
-        component={TestModal}
-        options={{
-          title: "",
-          headerTintColor: "#115ff9",
-        }}
+        name="User"
+        component={User}
+        initialParams={{ user: mockUser, logOut }}
       />
     </Stack.Navigator>
   );
 }
 
-export default () => {
+export default function App() {
   return (
     <PlantProvider>
       <NavigationContainer>
-        <App />
+        <AppNavigator />
       </NavigationContainer>
     </PlantProvider>
   );
-};
+}

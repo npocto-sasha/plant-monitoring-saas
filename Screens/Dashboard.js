@@ -82,29 +82,22 @@ export default function Dashboard() {
     <View style={styles.screen}>
       <View style={styles.body}>
         <View style={styles.header}>
-          <Text style={styles.title}>Мои растения</Text>
-          <Text style={styles.subtitle}>
-            Мониторинг состояния растений и данных с ESP32
-          </Text>
-        </View>
+          <View style={styles.headerTop}>
+            <View style={styles.headerText}>
+              <Text style={styles.title}>Мои растения</Text>
+              <Text style={styles.subtitle}>
+                Мониторинг состояния растений и данных с ESP32
+              </Text>
+            </View>
 
-    <View style={styles.header}>
-      <View style={styles.headerTop}>
-        <View style={styles.headerText}>
-          <Text style={styles.title}>Мои растения</Text>
-          <Text style={styles.subtitle}>
-            Мониторинг состояния растений и данных с ESP32
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => navigation.navigate("AddPlant")}
-        >
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
-      </View>
-    </View>   
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => navigation.navigate("AddPlant")}
+            >
+              <Text style={styles.addButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>   
 
         <FlatList
           data={plants}

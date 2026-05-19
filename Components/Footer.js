@@ -1,38 +1,34 @@
 import React from "react";
 import { useNavigation } from "@react-navigation/native";
-import { View, TouchableOpacity, Text, Image, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 
 export default function Footer() {
   const navigation = useNavigation();
+
   return (
     <View style={styles.footer}>
       <TouchableOpacity
-        onPress={() => {
-          navigation.navigate("Dashboard");
-        }}
-        style={{ width: 180 }}
+        style={styles.footerItem}
+        onPress={() => navigation.navigate("Dashboard")}
       >
-        <Image style={styles.img} source={require("../assets/Gauge.png")} />
-        <Text style={styles.text}>Дэшборд</Text>
+        <Text style={styles.icon}>🌿</Text>
+        <Text style={styles.text}>Растения</Text>
       </TouchableOpacity>
+
       <TouchableOpacity
-        onPress={() => {
-          navigation.navigate("Devices");
-        }}
-        style={{ width: 180 }}
+        style={styles.footerItem}
+        onPress={() => navigation.navigate("Devices")}
       >
-        <Image style={styles.img} source={require("../assets/Device.png")} />
+        <Text style={styles.icon}>📡</Text>
         <Text style={styles.text}>Устройства</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => {
-          navigation.navigate("TestModal");
-        }}
-        style={{ width: 180 }}
+        style={styles.footerItem}
+        onPress={() => navigation.navigate("Notification")}
       >
-        <Image style={styles.img} source={require("../assets/Notifi.png")} />
-        <Text style={styles.text}>Уведомление</Text>
+        <Text style={styles.icon}>💡</Text>
+        <Text style={styles.text}>Советы</Text>
       </TouchableOpacity>
     </View>
   );
@@ -46,18 +42,25 @@ const styles = StyleSheet.create({
     bottom: 0,
     flexDirection: "row",
     justifyContent: "space-around",
+    alignItems: "center",
     backgroundColor: "#E5EDFD",
-    paddingTop: 12,
     borderTopWidth: 2,
     borderTopColor: "#115FF9",
+    paddingBottom: 8,
+  },
+  footerItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  icon: {
+    fontSize: 22,
+    marginBottom: 4,
   },
   text: {
     color: "#115FF9",
     fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
-  },
-  img: {
-    marginHorizontal: "auto",
   },
 });
