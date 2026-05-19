@@ -1,11 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { localStorageService } from "../storage/localStorageService";
 import { mockPlants, mockDevices } from "../data/mockData";
 
 const PlantContext = createContext();
-
-const PLANTS_STORAGE_KEY = "plant-monitoring-saas:plants";
-const DEVICES_STORAGE_KEY = "plant-monitoring-saas:devices";
 
 export function PlantProvider({ children }) {
   const [plants, setPlants] = useState(mockPlants);
@@ -30,15 +27,15 @@ export function PlantProvider({ children }) {
 
   async function loadStoredData() {
     try {
-      const storedPlants = await AsyncStorage.getItem(PLANTS_STORAGE_KEY);
-      const storedDevices = await AsyncStorage.getItem(DEVICES_STORAGE_KEY);
+      const storedPlants = await localStorageService.getPlants();
+      const storedDevices = await localStorageService.getDevices();
 
       if (storedPlants) {
-        setPlants(JSON.parse(storedPlants));
+        setPlants(storedPlants);
       }
 
       if (storedDevices) {
-        setDevices(JSON.parse(storedDevices));
+        setDevices(storedDevices);
       }
     } catch (error) {
       console.log("Failed to load stored data:", error);
@@ -49,10 +46,7 @@ export function PlantProvider({ children }) {
 
   async function savePlants(nextPlants) {
     try {
-      await AsyncStorage.setItem(
-        PLANTS_STORAGE_KEY,
-        JSON.stringify(nextPlants)
-      );
+      await localStorageService.savePlants(nextPlants);
     } catch (error) {
       console.log("Failed to save plants:", error);
     }
@@ -60,10 +54,7 @@ export function PlantProvider({ children }) {
 
   async function saveDevices(nextDevices) {
     try {
-      await AsyncStorage.setItem(
-        DEVICES_STORAGE_KEY,
-        JSON.stringify(nextDevices)
-      );
+      await localStorageService.saveDevices(nextDevices);
     } catch (error) {
       console.log("Failed to save devices:", error);
     }
@@ -120,8 +111,7 @@ export function PlantProvider({ children }) {
 
   async function resetDemoData() {
     try {
-      await AsyncStorage.removeItem(PLANTS_STORAGE_KEY);
-      await AsyncStorage.removeItem(DEVICES_STORAGE_KEY);
+      await localStorageService.resetDemoData();
       setPlants(mockPlants);
       setDevices(mockDevices);
     } catch (error) {
