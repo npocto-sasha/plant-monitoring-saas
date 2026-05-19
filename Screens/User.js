@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -14,40 +14,12 @@ import { useNotification } from "../context/NotificationContext";
 export default function User() {
   const { plants, devices, resetDemoData } = usePlants();
   const { showNotification } = useNotification();
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  function handleResetDemoData() {
-    if (typeof window !== "undefined") {
-      const confirmed = window.confirm(
-        "Сбросить демо-данные? Все добавленные растения и устройства будут удалены."
-      );
-
-      if (!confirmed) {
-        return;
-      }
-
-      resetDemoData();
-      showNotification("Демо-данные сброшены.", "success");
-      return;
-    }
-
-    Alert.alert(
-      "Сбросить демо-данные?",
-      "Все добавленные растения и устройства будут удалены.",
-      [
-        {
-          text: "Отмена",
-          style: "cancel",
-        },
-        {
-          text: "Сбросить",
-          style: "destructive",
-          onPress: () => {
-            resetDemoData();
-            showNotification("Демо-данные сброшены.", "success");
-          },
-        },
-      ]
-    );
+  async function handleResetDemoData() {
+    await resetDemoData();
+    setShowResetConfirm(false);
+    showNotification("Демо-данные сброшены.", "success");
   }
 
   return (
@@ -88,12 +60,38 @@ export default function User() {
             рекомендации.
           </Text>
 
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={handleResetDemoData}
-          >
-            <Text style={styles.resetButtonText}>Сбросить демо-данные</Text>
-          </TouchableOpacity>
+          {showResetConfirm ? (
+            <View style={styles.confirmBox}>
+              <Text style={styles.confirmTitle}>Подтвердите сброс</Text>
+              <Text style={styles.confirmText}>
+                Все добавленные растения и устройства будут удалены. Будут восстановлены
+                исходные демо-данные.
+              </Text>
+
+              <View style={styles.confirmActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setShowResetConfirm(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Отмена</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.confirmButton}
+                  onPress={handleResetDemoData}
+                >
+                  <Text style={styles.confirmButtonText}>Сбросить</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.resetButton}
+              onPress={() => setShowResetConfirm(true)}
+            >
+              <Text style={styles.resetButtonText}>Сбросить демо-данные</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.card}>
@@ -193,6 +191,52 @@ const styles = StyleSheet.create({
   resetButtonText: {
     color: "#842029",
     fontSize: 16,
+    fontWeight: "700",
+  },
+  confirmBox: {
+  marginTop: 16,
+  backgroundColor: "#FFF3CD",
+  borderRadius: 14,
+  padding: 14,
+  },
+  confirmTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#16213E",
+  },
+  confirmText: {
+    marginTop: 6,
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#374151",
+  },
+  confirmActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 14,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#374151",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  confirmButton: {
+    flex: 1,
+    backgroundColor: "#F8D7DA",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  confirmButtonText: {
+    color: "#842029",
+    fontSize: 15,
     fontWeight: "700",
   },
 });
