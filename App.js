@@ -1,6 +1,8 @@
 import React from "react";
 
 import { PlantProvider } from "./context/PlantContext";
+import { NotificationProvider } from "./context/NotificationContext";
+import AppToast from "./Components/AppToast";
 
 import User from "./Screens/User";
 import Devices from "./Screens/Devices";
@@ -33,11 +35,22 @@ function AppNavigator() {
       }}
     >
       <Stack.Screen name="Dashboard" component={Dashboard} />
-
-      <Stack.Screen name="AddPlant" component={AddPlant} />
-
+      <Stack.Screen
+        name="AddPlant"
+        component={AddPlant}
+        options={{
+          headerShown: true,
+          title: "Добавить растение",
+          headerTintColor: "#115FF9",
+          headerTitleStyle: {
+            fontWeight: "bold",
+            color: "#115FF9",
+          },
+          headerTitleAlign: "center",
+          headerBackTitleVisible: false,
+        }}
+      />
       <Stack.Screen name="Devices" component={Devices} />
-
       <Stack.Screen name="Notification" component={Notifi} />
 
       <Stack.Screen
@@ -67,9 +80,13 @@ function AppNavigator() {
 export default function App() {
   return (
     <PlantProvider>
-      <NavigationContainer>
-        <AppNavigator />
-      </NavigationContainer>
+      <NotificationProvider>
+        <NavigationContainer>
+          <AppNavigator />
+        </NavigationContainer>
+
+        <AppToast />
+      </NotificationProvider>
     </PlantProvider>
   );
 }

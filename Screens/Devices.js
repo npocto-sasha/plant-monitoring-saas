@@ -10,9 +10,11 @@ import {
 } from "react-native";
 import Footer from "../Components/Footer";
 import { usePlants } from "../context/PlantContext";
+import { useNotification } from "../context/NotificationContext";
 
 export default function Devices() {
   const { plants, devices, addDevice, getDevicePlant } = usePlants();
+  const { showNotification } = useNotification();
 
   const [showForm, setShowForm] = useState(false);
   const [deviceName, setDeviceName] = useState("");
@@ -23,17 +25,17 @@ export default function Devices() {
 
   function saveDevice() {
     if (!deviceName.trim()) {
-      showMessage("Ошибка: введите название устройства");
+      showNotification("Введите название устройства", "error");
       return;
     }
 
     if (!deviceCode.trim()) {
-      showMessage("Ошибка: введите Device ID устройства");
+      showNotification("Введите Device ID устройства", "error");
       return;
     }
 
     if (!selectedPlantId) {
-      showMessage("Ошибка: выберите растение для привязки");
+      showNotification("Выберите растение для привязки", "error");
       return;
     }
 
@@ -48,18 +50,10 @@ export default function Devices() {
     setSelectedPlantId(plants[0] ? plants[0].id : "");
     setShowForm(false);
 
-    showMessage(
-      "Устройство добавлено. Данные временно сохраняются в приложении до перезагрузки."
+    showNotification(
+      "Устройство добавлено и привязано к растению.",
+      "success"
     );
-  }
-
-  function showMessage(message) {
-    if (typeof window !== "undefined") {
-      window.alert(message);
-      return;
-    }
-
-    alert(message);
   }
 
   const DeviceCard = ({ item }) => {

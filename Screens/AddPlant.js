@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { usePlants } from "../context/PlantContext";
+import { useNotification } from "../context/NotificationContext";
 import {
   View,
   Text,
@@ -14,15 +15,12 @@ export default function AddPlant({ navigation }) {
   const [name, setName] = useState("");
   const [type, setType] = useState("");
   const [location, setLocation] = useState("");
+  const { showNotification } = useNotification();
   const { addPlant } = usePlants();
 
 function savePlant() {
   if (!name.trim()) {
-    if (typeof window !== "undefined") {
-      window.alert("Ошибка: введите название растения");
-    } else {
-      Alert.alert("Ошибка", "Введите название растения");
-    }
+    showNotification("Введите название растения", "error");
     return;
   }
 
@@ -32,24 +30,12 @@ function savePlant() {
     location: location.trim(),
   });
 
-  if (typeof window !== "undefined") {
-    window.alert(
-      "Растение добавлено. Данные временно сохраняются в приложении до перезагрузки."
-    );
-    navigation.navigate("Dashboard");
-    return;
-  }
-
-  Alert.alert(
-    "Растение добавлено",
-    "Данные временно сохраняются в приложении до перезагрузки.",
-    [
-      {
-        text: "ОК",
-        onPress: () => navigation.navigate("Dashboard"),
-      },
-    ]
+  showNotification(
+    "Растение добавлено. Данные сохраняются локально на устройстве.",
+    "success"
   );
+
+  navigation.navigate("Dashboard");
 }
 
   return (

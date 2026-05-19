@@ -9,18 +9,11 @@ import {
 } from "react-native";
 import Footer from "../Components/Footer";
 import { usePlants } from "../context/PlantContext";
+import { useNotification } from "../context/NotificationContext";
 
 export default function User() {
   const { plants, devices, resetDemoData } = usePlants();
-
-  function showMessage(message) {
-    if (typeof window !== "undefined") {
-      window.alert(message);
-      return;
-    }
-
-    Alert.alert("Готово", message);
-  }
+  const { showNotification } = useNotification();
 
   function handleResetDemoData() {
     if (typeof window !== "undefined") {
@@ -33,7 +26,7 @@ export default function User() {
       }
 
       resetDemoData();
-      window.alert("Демо-данные сброшены.");
+      showNotification("Демо-данные сброшены.", "success");
       return;
     }
 
@@ -50,7 +43,7 @@ export default function User() {
           style: "destructive",
           onPress: () => {
             resetDemoData();
-            showMessage("Демо-данные сброшены.");
+            showNotification("Демо-данные сброшены.", "success");
           },
         },
       ]
