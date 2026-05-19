@@ -1,11 +1,73 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { mockPlants, mockDevices } from "../data/mockData";
 
 const PlantContext = createContext();
 
+const PLANTS_STORAGE_KEY = "plant-monitoring-saas:plants";
+const DEVICES_STORAGE_KEY = "plant-monitoring-saas:devices";
+
 export function PlantProvider({ children }) {
   const [plants, setPlants] = useState(mockPlants);
   const [devices, setDevices] = useState(mockDevices);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    loadStoredData();
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      savePlants(plants);
+    }
+  }, [plants, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      saveDevices(devices);
+    }
+  }, [devices, isLoaded]);
+
+  async function loadStoredData() {
+    try {
+      const storedPlants = await AsyncStorage.getItem(PLANTS_STORAGE_KEY);
+      const storedDevices = await AsyncStorage.getItem(DEVICES_STORAGE_KEY);
+
+      if (storedPlants) {
+        setPlants(JSON.parse(storedPlants));
+      }
+
+      if (storedDevices) {
+        setDevices(JSON.parse(storedDevices));
+      }
+    } catch (error) {
+      console.log("Failed to load stored data:", error);
+    } finally {
+      setIsLoaded(true);
+    }
+  }
+
+  async function savePlants(nextPlants) {
+    try {
+      await AsyncStorage.setItem(
+        PLANTS_STORAGE_KEY,
+        JSON.stringify(nextPlants)
+      );
+    } catch (error) {
+      console.log("Failed to save plants:", error);
+    }
+  }
+
+  async function saveDevices(nextDevices) {
+    try {
+      await AsyncStorage.setItem(
+        DEVICES_STORAGE_KEY,
+        JSON.stringify(nextDevices)
+      );
+    } catch (error) {
+      console.log("Failed to save devices:", error);
+    }
+  }
 
   function addPlant(plantData) {
     const newPlant = {
@@ -56,6 +118,17 @@ export function PlantProvider({ children }) {
     );
   }
 
+  async function resetDemoData() {
+    try {
+      await AsyncStorage.removeItem(PLANTS_STORAGE_KEY);
+      await AsyncStorage.removeItem(DEVICES_STORAGE_KEY);
+      setPlants(mockPlants);
+      setDevices(mockDevices);
+    } catch (error) {
+      console.log("Failed to reset demo data:", error);
+    }
+  }
+
   function getPlantById(plantId) {
     return plants.find((plant) => plant.id === plantId);
   }
@@ -73,8 +146,10 @@ export function PlantProvider({ children }) {
       value={{
         plants,
         devices,
+        isLoaded,
         addPlant,
         addDevice,
+        resetDemoData,
         getPlantById,
         getDeviceById,
         getDevicePlant,
