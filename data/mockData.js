@@ -12,6 +12,26 @@ export const mockPlants = [
       temperature: 23.5,
       light: 680,
     },
+    telemetryHistory: [
+      {
+        time: "10:00",
+        soilMoisture: 48,
+        temperature: 22.8,
+        light: 620,
+      },
+      {
+        time: "12:00",
+        soilMoisture: 45,
+        temperature: 23.1,
+        light: 650,
+      },
+      {
+        time: "14:00",
+        soilMoisture: 42,
+        temperature: 23.5,
+        light: 680,
+      },
+    ],
     recommendation: "Показатели в норме. Продолжайте обычный уход.",
   },
   {
@@ -27,6 +47,26 @@ export const mockPlants = [
       temperature: 21.2,
       light: 310,
     },
+    telemetryHistory: [
+      {
+        time: "10:00",
+        soilMoisture: 33,
+        temperature: 21.0,
+        light: 290,
+      },
+      {
+        time: "12:00",
+        soilMoisture: 28,
+        temperature: 21.1,
+        light: 305,
+      },
+      {
+        time: "14:00",
+        soilMoisture: 24,
+        temperature: 21.2,
+        light: 310,
+      },
+    ],
     recommendation: "Почва слишком сухая. Возможно, растение нужно полить.",
   },
   {
@@ -42,10 +82,31 @@ export const mockPlants = [
       temperature: 16.4,
       light: 190,
     },
+    telemetryHistory: [
+      {
+        time: "10:00",
+        soilMoisture: 25,
+        temperature: 17.2,
+        light: 240,
+      },
+      {
+        time: "12:00",
+        soilMoisture: 21,
+        temperature: 16.8,
+        light: 210,
+      },
+      {
+        time: "14:00",
+        soilMoisture: 18,
+        temperature: 16.4,
+        light: 190,
+      },
+    ],
     recommendation:
       "Обнаружены неблагоприятные условия: низкая температура и недостаточная освещенность.",
   },
 ];
+
 export const mockDevices = [
   {
     id: "device-1",

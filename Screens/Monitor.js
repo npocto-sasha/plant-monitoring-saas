@@ -68,6 +68,49 @@ export default function Monitor({ route }) {
       </View>
 
       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>История измерений</Text>
+
+        {plant.telemetryHistory && plant.telemetryHistory.length > 0 ? (
+          plant.telemetryHistory.map((item, index) => (
+            <View key={`${plant.id}-history-${index}`} style={styles.historyCard}>
+              <View style={styles.historyHeader}>
+                <Text style={styles.historyTime}>{item.time}</Text>
+                <Text style={styles.historyLabel}>замер</Text>
+              </View>
+
+              <View style={styles.historyMetrics}>
+                <View style={styles.historyMetricBox}>
+                  <Text style={styles.historyMetricValue}>
+                    {item.soilMoisture}%
+                  </Text>
+                  <Text style={styles.historyMetricLabel}>Влажность</Text>
+                </View>
+
+                <View style={styles.historyMetricBox}>
+                  <Text style={styles.historyMetricValue}>
+                    {item.temperature}°C
+                  </Text>
+                  <Text style={styles.historyMetricLabel}>Температура</Text>
+                </View>
+
+                <View style={styles.historyMetricBox}>
+                  <Text style={styles.historyMetricValue}>{item.light} lx</Text>
+                  <Text style={styles.historyMetricLabel}>Свет</Text>
+                </View>
+              </View>
+            </View>
+          ))
+        ) : (
+          <View style={styles.emptyHistoryCard}>
+            <Text style={styles.emptyHistoryTitle}>История пока отсутствует</Text>
+            <Text style={styles.emptyHistoryText}>
+              После подключения ESP32-устройства здесь появятся измерения с датчиков.
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Устройство</Text>
         <View style={styles.deviceCard}>
           <Text style={styles.deviceLabel}>ESP32</Text>
@@ -181,5 +224,64 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: "#16213E",
+  },
+  historyCard: {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 16,
+  padding: 14,
+  marginBottom: 10,
+  },
+  historyHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  historyTime: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#16213E",
+  },
+  historyLabel: {
+    fontSize: 13,
+    color: "#6B7280",
+  },
+  historyMetrics: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  historyMetricBox: {
+    flex: 1,
+    backgroundColor: "#F4F7FB",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    alignItems: "center",
+  },
+  historyMetricValue: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#115FF9",
+  },
+  historyMetricLabel: {
+    marginTop: 4,
+    fontSize: 11,
+    color: "#6B7280",
+  },
+  emptyHistoryCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+  },
+  emptyHistoryTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#16213E",
+  },
+  emptyHistoryText: {
+    marginTop: 8,
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#6B7280",
   },
 });

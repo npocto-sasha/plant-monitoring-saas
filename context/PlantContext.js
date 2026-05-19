@@ -21,6 +21,7 @@ export function PlantProvider({ children }) {
         temperature: 0,
         light: 0,
       },
+      telemetryHistory: [],
       recommendation:
         "Растение добавлено. Для получения показателей подключите ESP32-устройство.",
     };
