@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState } from "react";
-import { mockPlants } from "../data/mockData";
+import { mockPlants, mockDevices } from "../data/mockData";
 
 const PlantContext = createContext();
 
 export function PlantProvider({ children }) {
   const [plants, setPlants] = useState(mockPlants);
+  const [devices, setDevices] = useState(mockDevices);
 
   function addPlant(plantData) {
     const newPlant = {
@@ -27,12 +28,57 @@ export function PlantProvider({ children }) {
     setPlants((currentPlants) => [newPlant, ...currentPlants]);
   }
 
+  function addDevice(deviceData) {
+    const newDevice = {
+      id: `device-${Date.now()}`,
+      name: deviceData.name,
+      deviceCode: deviceData.deviceCode,
+      plantId: deviceData.plantId,
+      status: "active",
+      statusText: "Активно",
+      lastSync: "Нет данных",
+    };
+
+    setDevices((currentDevices) => [newDevice, ...currentDevices]);
+
+    setPlants((currentPlants) =>
+      currentPlants.map((plant) =>
+        plant.id === deviceData.plantId
+          ? {
+              ...plant,
+              deviceId: deviceData.deviceCode,
+              recommendation:
+                "Устройство подключено. Ожидается получение первых данных с датчиков.",
+            }
+          : plant
+      )
+    );
+  }
+
   function getPlantById(plantId) {
     return plants.find((plant) => plant.id === plantId);
   }
 
+  function getDeviceById(deviceId) {
+    return devices.find((device) => device.id === deviceId);
+  }
+
+  function getDevicePlant(device) {
+    return plants.find((plant) => plant.id === device.plantId);
+  }
+
   return (
-    <PlantContext.Provider value={{ plants, addPlant, getPlantById }}>
+    <PlantContext.Provider
+      value={{
+        plants,
+        devices,
+        addPlant,
+        addDevice,
+        getPlantById,
+        getDeviceById,
+        getDevicePlant,
+      }}
+    >
       {children}
     </PlantContext.Provider>
   );

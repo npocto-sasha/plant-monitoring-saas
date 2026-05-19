@@ -1,389 +1,378 @@
-import React, { useEffect, useLayoutEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Image,
-  Dimensions,
-  Modal,
   TextInput,
-  Alert,
+  ScrollView,
 } from "react-native";
-import { getToken } from "../Components/ResHandler";
-import { DeviceService } from "../Components/ResHandler";
-import Button from "../Components/Button";
 import Footer from "../Components/Footer";
-import { useNavigation } from "@react-navigation/native";
-// KjsOLA9<>
+import { usePlants } from "../context/PlantContext";
+
 export default function Devices() {
-  const [delModalVisible, setDelModalVisible] = useState(false);
-  const [addModalVisible, setAddModalVisible] = useState(false);
-  const [devices, setDevices] = useState();
+  const { plants, devices, addDevice, getDevicePlant } = usePlants();
 
-  async function getDev() {
-    await getToken();
-    const dev = await DeviceService.getMyDevices();
-    var temp = dev;
-    temp.push({
-      name: "Добавить устройство",
-      id: null,
-    });
-    setDevices(temp);
-    console.log(temp);
-  }
+  const [showForm, setShowForm] = useState(false);
+  const [deviceName, setDeviceName] = useState("");
+  const [deviceCode, setDeviceCode] = useState("");
+  const [selectedPlantId, setSelectedPlantId] = useState(
+    plants[0] ? plants[0].id : ""
+  );
 
-  async function delDev(id) {
-    await getToken();
-    const dev = await DeviceService.delete(id);
-    console.log(dev);
-    await getDev();
-  }
-  async function addDev() {
-    if (name && id && key) {
-      const dev = await DeviceService.activate({
-        name: name,
-        number: id,
-        activationKey: key,
-      });
-      if (dev) {
-        Alert.alert("Успех");
-        var temp = devices;
-        temp.push(dev);
-        setDevices(temp);
-      }
+  function saveDevice() {
+    if (!deviceName.trim()) {
+      showMessage("Ошибка: введите название устройства");
+      return;
     }
-  }
-  useLayoutEffect(() => {
-    getDev();
-  }, []);
 
-  var name = "";
-  var id = "";
-  var key = "";
+    if (!deviceCode.trim()) {
+      showMessage("Ошибка: введите Device ID устройства");
+      return;
+    }
 
-  function changeId(text) {
-    id = text;
-  }
-  function changeName(text) {
-    name = text;
-  }
-  function changeKey(text) {
-    key = text;
-  }
-  const [curDeviceName, setCurDeviceName] = useState("");
-  const [curDeviceId, setCurDeviceId] = useState(1);
+    if (!selectedPlantId) {
+      showMessage("Ошибка: выберите растение для привязки");
+      return;
+    }
 
-  const navigation = useNavigation();
-  const keyExtractor = (item) => item.id;
-  const ListItem = ({ data }) => {
+    addDevice({
+      name: deviceName.trim(),
+      deviceCode: deviceCode.trim(),
+      plantId: selectedPlantId,
+    });
+
+    setDeviceName("");
+    setDeviceCode("");
+    setSelectedPlantId(plants[0] ? plants[0].id : "");
+    setShowForm(false);
+
+    showMessage(
+      "Устройство добавлено. Данные временно сохраняются в приложении до перезагрузки."
+    );
+  }
+
+  function showMessage(message) {
+    if (typeof window !== "undefined") {
+      window.alert(message);
+      return;
+    }
+
+    alert(message);
+  }
+
+  const DeviceCard = ({ item }) => {
+    const plant = getDevicePlant(item);
+
     return (
-      <View>
-        {data.id ? (
-          <View style={styles.item}>
-            <Text style={styles.itemText}>Название: {data.name}</Text>
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={styles.cardTitleBlock}>
+            <Text style={styles.deviceName}>{item.name}</Text>
+            <Text style={styles.deviceCode}>{item.deviceCode}</Text>
+          </View>
 
-            <Text style={styles.itemText}>Номер клиента: {data.number}</Text>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusText}>{item.statusText}</Text>
+          </View>
+        </View>
 
-            <TouchableOpacity
-              style={styles.itemDeleteBtn}
-              onPress={() => {
-                setDelModalVisible(!delModalVisible);
-                setCurDeviceId(data.number);
-                setCurDeviceName(data.name);
-              }}
-            >
-              <Text style={styles.itemDeleteText}>Удалить</Text>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Привязано к растению</Text>
+          <Text style={styles.infoValue}>
+            {plant ? plant.name : "Растение не найдено"}
+          </Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Последняя синхронизация</Text>
+          <Text style={styles.infoValue}>{item.lastSync}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.screen}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>Устройства ESP32</Text>
+            <Text style={styles.subtitle}>
+              Добавляйте контроллеры ESP32 и привязывайте их к растениям для
+              получения данных с датчиков.
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setShowForm((current) => !current)}
+          >
+            <Text style={styles.addButtonText}>{showForm ? "×" : "+"}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {showForm && (
+          <View style={styles.formCard}>
+            <Text style={styles.formTitle}>Добавить устройство</Text>
+
+            <Text style={styles.label}>Название устройства</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Например, ESP32 у фикуса"
+              value={deviceName}
+              onChangeText={setDeviceName}
+            />
+
+            <Text style={styles.label}>Device ID</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Например, esp32-003"
+              value={deviceCode}
+              onChangeText={setDeviceCode}
+              autoCapitalize="none"
+            />
+
+            <Text style={styles.label}>Привязать к растению</Text>
+
+            <View style={styles.plantsList}>
+              {plants.map((plant) => (
+                <TouchableOpacity
+                  key={plant.id}
+                  style={[
+                    styles.plantOption,
+                    selectedPlantId === plant.id && styles.plantOptionActive,
+                  ]}
+                  onPress={() => setSelectedPlantId(plant.id)}
+                >
+                  <Text
+                    style={[
+                      styles.plantOptionText,
+                      selectedPlantId === plant.id &&
+                        styles.plantOptionTextActive,
+                    ]}
+                  >
+                    {plant.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity style={styles.saveButton} onPress={saveDevice}>
+              <Text style={styles.saveButtonText}>Сохранить устройство</Text>
             </TouchableOpacity>
           </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() => {
-              setAddModalVisible(!addModalVisible);
-            }}
-          >
-            <Text style={styles.itemText}>Активировать устройство</Text>
-          </TouchableOpacity>
         )}
-      </View>
-    );
-  };
-  const DelModal = () => {
-    return (
-      <Modal animationType="fade" transparent={true} visible={delModalVisible}>
-        <View style={styles.modalView}>
-          <Text style={styles.modalText}>
-            Удалить устройство "{curDeviceName}"?
-          </Text>
-          <Button
-            textStyle={styles.text}
-            text={"Удалить"}
-            styl={styles.modalbtn}
-            tuk={() => {
-              setDelModalVisible(!delModalVisible);
-              delDev(data.id);
-            }}
-          />
-          <Button
-            tuk={() => {
-              setDelModalVisible(!delModalVisible);
-            }}
-            text={"Закрыть"}
-            textStyle={[
-              styles.text,
-              {
-                color: "black",
-                fontWeight: "light",
-                fontSize: 14,
-                marginHorizontal: "auto",
-              },
-            ]}
-            styl={{
-              width: 115,
-              height: 45,
-              marginLeft: 0,
-            }}
-          />
-        </View>
-      </Modal>
-    );
-  };
-  const AddModal = () => {
-    return (
-      <Modal animationType="fade" transparent={true} visible={addModalVisible}>
-        <View style={styles.addModalView}>
-          <Image style={styles.logo} source={require("../assets/Logo.png")} />
 
-          <Text style={styles.title}>Активация устройства</Text>
-
-          <Text style={styles.inputTitle}>Название устройства</Text>
-
-          <TextInput
-            style={styles.Txtin}
-            onChangeText={(text) => {
-              changeName(text);
-            }}
-            placeholder="Введите название устройства"
-          />
-
-          <Text style={styles.inputTitle}>ID устройства</Text>
-          <TextInput
-            style={styles.Txtin}
-            onChangeText={(text) => {
-              changeId(text);
-            }}
-            placeholder="Введите ID"
-          />
-
-          <Text style={styles.inputTitle}>Ключ активации</Text>
-          <TextInput
-            style={styles.Txtin}
-            onChangeText={(text) => {
-              changeKey(text);
-            }}
-            placeholder="Введите ключ активации"
-          />
-
-          <Button
-            tuk={() => {
-              addDev();
-              setAddModalVisible(!addModalVisible);
-            }}
-            text={"Создать"}
-            styl={styles.modalbtn}
-            textStyle={styles.text}
-          />
-          <Button
-            tuk={() => setAddModalVisible(!addModalVisible)}
-            text={"Закрыть"}
-            textStyle={[
-              styles.text,
-              { color: "black", fontWeight: "light", fontSize: 14 },
-            ]}
-            styl={[styles.modalbtn, { backgroundColor: "white" }]}
-          />
-        </View>
-      </Modal>
-    );
-  };
-  return (
-    <View style={{ flex: 1 }}>
-      <DelModal />
-      <AddModal />
-      <View
-        style={{
-          marginTop: 50,
-          height: 65,
-          flexDirection: "row",
-          justifyContent: "space-between",
-        }}
-      >
-        <Text
-          style={{
-            marginLeft: 18,
-            color: "#115FF9",
-            fontSize: 24,
-            fontWeight: "bold",
-            marginTop: 10,
-          }}
-        >
-          Устройства
-        </Text>
-        <TouchableOpacity
-          onPress={() => {
-            navigation.navigate("User");
-          }}
-          style={{ marginRight: 10 }}
-        >
-          <Image
-            style={{ width: 55.7, height: 56 }}
-            source={require("../assets/User.png")}
-          />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.body}>
         <FlatList
           data={devices}
-          keyExtractor={keyExtractor}
-          renderItem={({ item }) => <ListItem data={item} />}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <DeviceCard item={item} />}
+          scrollEnabled={false}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyTitle}>Устройства не добавлены</Text>
+              <Text style={styles.emptyText}>
+                Добавьте ESP32-устройство и привяжите его к растению.
+              </Text>
+            </View>
+          }
         />
-      </View>
+      </ScrollView>
+
       <Footer />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  item: {
-    width: 350,
-    height: 156,
-    backgroundColor: "#115FF9",
-    marginHorizontal: "auto",
-    marginVertical: 8,
-    borderRadius: 15,
-    paddingTop: 12,
-  },
-  itemText: {
-    color: "white",
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: "auto",
-  },
-  itemDeleteBtn: {
-    width: 115,
-    height: 45,
-    backgroundColor: "#F5F5F5",
-    marginHorizontal: "auto",
-    borderRadius: 5,
-    marginVertical: 15,
-  },
-  itemDeleteText: {
-    color: "#115FF9",
-    fontSize: 24,
-    fontWeight: "Light",
-    textAlign: "center",
-    marginVertical: 5,
-  },
-  itemAddText: {
-    color: "white",
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: "auto",
+  screen: {
+    flex: 1,
+    backgroundColor: "#F4F7FB",
   },
   body: {
-    height: Dimensions.get("window").height - 115 - 33,
+    flex: 1,
+    paddingHorizontal: 16,
   },
-  text: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: "auto",
+  header: {
+    paddingTop: 24,
+    paddingBottom: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
   },
-  button: {
-    width: 275,
-    height: 45,
-    marginTop: 202,
-    borderRadius: 5,
-    backgroundColor: "#115FF9",
-    marginLeft: 68,
-  },
-  modalView: {
-    alignItems: "center",
-    margin: "auto",
-    width: 350,
-    height: 180,
-    backgroundColor: "white",
-    borderRadius: 25,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalText: {
-    color: "525252",
-    fontSize: 18,
-    textAlign: "center",
-    marginTop: 20,
-  },
-  modalbtn: {
-    width: 275,
-    height: 45,
-    borderRadius: 5,
-    backgroundColor: "#115FF9",
-    marginLeft: 0,
-    marginTop: 20,
-  },
-  addModalView: {
-    alignItems: "center",
-    margin: "auto",
-    width: 350,
-    height: 590,
-    backgroundColor: "white",
-    borderRadius: 25,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  logo: {
-    marginHorizontal: "auto",
-    width: 106,
-    height: 106,
-    marginTop: 54,
-  },
-  Txtin: {
-    marginHorizontal: "auto",
-    borderRadius: 5,
-    backgroundColor: "#C2CEE4",
-    width: 275,
-    height: 40,
-    paddingLeft: 8,
-    color: "#525252",
-    fontSize: 18,
+  headerText: {
+    flex: 1,
   },
   title: {
-    marginHorizontal: "auto",
-    marginTop: 30,
-    marginBottom: 10,
-    fontSize: 24,
-    color: "#115FF9",
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#16213E",
   },
-  inputTitle: {
+  subtitle: {
+    marginTop: 6,
+    fontSize: 15,
+    color: "#6B7280",
+    lineHeight: 21,
+  },
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#115FF9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addButtonText: {
+    color: "#FFFFFF",
+    fontSize: 30,
+    fontWeight: "700",
+    lineHeight: 34,
+  },
+  formCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  formTitle: {
+    fontSize: 21,
+    fontWeight: "700",
+    color: "#16213E",
+    marginBottom: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 6,
+    marginTop: 12,
+  },
+  input: {
+    backgroundColor: "#F4F7FB",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: "#16213E",
+  },
+  plantsList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  plantOption: {
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#F4F7FB",
+  },
+  plantOptionActive: {
+    backgroundColor: "#115FF9",
+  },
+  plantOptionText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+  },
+  plantOptionTextActive: {
+    color: "#FFFFFF",
+  },
+  saveButton: {
+    marginTop: 18,
+    backgroundColor: "#115FF9",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  listContent: {
+    paddingBottom: 100,
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  cardTitleBlock: {
+    flex: 1,
+  },
+  deviceName: {
+    fontSize: 21,
+    fontWeight: "700",
+    color: "#16213E",
+  },
+  deviceCode: {
+    marginTop: 4,
+    fontSize: 14,
+    color: "#6B7280",
+  },
+  statusBadge: {
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: "#DFF7E8",
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#16213E",
+  },
+  infoRow: {
+    marginTop: 14,
+    backgroundColor: "#F4F7FB",
+    borderRadius: 14,
+    padding: 12,
+  },
+  infoLabel: {
+    fontSize: 13,
+    color: "#6B7280",
+  },
+  infoValue: {
+    marginTop: 4,
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#16213E",
+  },
+  emptyCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 18,
     marginTop: 10,
-    fontSize: 18,
-    color: "#115FF9",
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#16213E",
+  },
+  emptyText: {
+    marginTop: 8,
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#6B7280",
   },
 });

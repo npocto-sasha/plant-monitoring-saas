@@ -46,3 +46,23 @@ export const mockPlants = [
       "Обнаружены неблагоприятные условия: низкая температура и недостаточная освещенность.",
   },
 ];
+export const mockDevices = [
+  {
+    id: "device-1",
+    name: "ESP32 у фикуса",
+    deviceCode: "esp32-001",
+    plantId: "plant-1",
+    status: "active",
+    statusText: "Активно",
+    lastSync: "18.05.2026 14:30",
+  },
+  {
+    id: "device-2",
+    name: "ESP32 у монстеры",
+    deviceCode: "esp32-002",
+    plantId: "plant-2",
+    status: "active",
+    statusText: "Активно",
+    lastSync: "18.05.2026 13:45",
+  },
+];
