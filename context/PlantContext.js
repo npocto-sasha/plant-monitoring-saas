@@ -3,6 +3,7 @@ import { localStorageService } from "../storage/localStorageService";
 import { mockPlants, mockDevices } from "../data/mockData";
 import { API_CONFIG } from "../api/config";
 import { plantApi } from "../api/plantApi";
+import { deviceApi } from "../api/deviceApi";
 
 const PlantContext = createContext();
 
@@ -30,31 +31,48 @@ export function PlantProvider({ children }) {
   async function loadStoredData() {
     try {
       if (API_CONFIG.USE_BACKEND) {
-        console.log("Loading plants from backend...");
+        const [backendPlants, backendDevices] = await Promise.all([
+          plantApi.getPlants(),
+          deviceApi.getDevices(),
+        ]);
 
-        const backendPlants = await plantApi.getPlants();
-        console.log("Backend plants:", backendPlants);
+        const mappedPlants = backendPlants.map((plant) => {
+          const latestTelemetry = plant.telemetry?.[0];
+          const firstDevice = plant.devices?.[0];
 
-        const mappedPlants = backendPlants.map((plant) => ({
-          id: String(plant.id),
-          name: plant.name,
-          type: plant.type || "Комнатное растение",
-          location: plant.location || "Не указано",
-          status: "normal",
-          statusText: "Норма",
-          deviceId: plant.devices?.[0]?.deviceCode || null,
-          telemetry: {
-            soilMoisture: plant.telemetry?.[0]?.soilMoisture || 0,
-            temperature: plant.telemetry?.[0]?.temperature || 0,
-            light: plant.telemetry?.[0]?.light || 0,
-          },
-          telemetryHistory: [],
-          recommendation:
-            "Данные растения загружены с backend. Рекомендации будут подключены следующим этапом.",
+          return {
+            id: String(plant.id),
+            name: plant.name,
+            type: plant.type || "Комнатное растение",
+            location: plant.location || "Не указано",
+            status: "normal",
+            statusText: "Норма",
+            deviceId: firstDevice?.deviceCode || null,
+            telemetry: {
+              soilMoisture: latestTelemetry?.soilMoisture || 0,
+              temperature: latestTelemetry?.temperature || 0,
+              light: latestTelemetry?.light || 0,
+            },
+            telemetryHistory: [],
+            recommendation:
+              "Данные растения загружены с backend. Рекомендации будут подключены следующим этапом.",
+          };
+        });
+
+        const mappedDevices = backendDevices.map((device) => ({
+          id: String(device.id),
+          name: device.name,
+          deviceCode: device.deviceCode,
+          plantId: device.plantId ? String(device.plantId) : null,
+          status: device.status?.toLowerCase() || "active",
+          statusText: device.status === "ACTIVE" ? "Активно" : "Неактивно",
+          lastSync: device.updatedAt
+            ? new Date(device.updatedAt).toLocaleString("ru-RU")
+            : "Нет данных",
         }));
 
         setPlants(mappedPlants);
-        setDevices(mockDevices);
+        setDevices(mappedDevices);
         return;
       }
 

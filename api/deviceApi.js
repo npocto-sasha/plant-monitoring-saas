@@ -1,21 +1,54 @@
+import { getApiUrl } from "./config";
+
+async function request(path, options = {}) {
+  const response = await fetch(getApiUrl(path), {
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    ...options,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "API request failed");
+  }
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  return response.json();
+}
+
 export const deviceApi = {
   async getDevices() {
-    throw new Error("deviceApi.getDevices is not connected to backend yet");
+    return request("/devices");
   },
 
   async getDeviceById(deviceId) {
-    throw new Error("deviceApi.getDeviceById is not connected to backend yet");
+    return request(`/devices/${deviceId}`);
   },
 
   async createDevice(deviceData) {
-    throw new Error("deviceApi.createDevice is not connected to backend yet");
+    return request("/devices", {
+      method: "POST",
+      body: JSON.stringify(deviceData),
+    });
   },
 
   async bindDeviceToPlant(deviceId, plantId) {
-    throw new Error("deviceApi.bindDeviceToPlant is not connected to backend yet");
+    return request(`/devices/${deviceId}/bind-plant`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        plantId: Number(plantId),
+      }),
+    });
   },
 
   async deleteDevice(deviceId) {
-    throw new Error("deviceApi.deleteDevice is not connected to backend yet");
+    return request(`/devices/${deviceId}`, {
+      method: "DELETE",
+    });
   },
 };
