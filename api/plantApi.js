@@ -1,21 +1,48 @@
+import { getApiUrl } from "./config";
+
+async function request(path, options = {}) {
+  const response = await fetch(getApiUrl(path), {
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    ...options,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "API request failed");
+  }
+
+  return response.json();
+}
+
 export const plantApi = {
   async getPlants() {
-    throw new Error("plantApi.getPlants is not connected to backend yet");
+    return request("/plants");
   },
 
   async getPlantById(plantId) {
-    throw new Error("plantApi.getPlantById is not connected to backend yet");
+    return request(`/plants/${plantId}`);
   },
 
   async createPlant(plantData) {
-    throw new Error("plantApi.createPlant is not connected to backend yet");
+    return request("/plants", {
+      method: "POST",
+      body: JSON.stringify(plantData),
+    });
   },
 
   async updatePlant(plantId, plantData) {
-    throw new Error("plantApi.updatePlant is not connected to backend yet");
+    return request(`/plants/${plantId}`, {
+      method: "PATCH",
+      body: JSON.stringify(plantData),
+    });
   },
 
   async deletePlant(plantId) {
-    throw new Error("plantApi.deletePlant is not connected to backend yet");
+    return request(`/plants/${plantId}`, {
+      method: "DELETE",
+    });
   },
 };

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { localStorageService } from "../storage/localStorageService";
 import { mockPlants, mockDevices } from "../data/mockData";
+import { API_CONFIG } from "../api/config";
+import { plantApi } from "../api/plantApi";
 
 const PlantContext = createContext();
 
@@ -27,6 +29,35 @@ export function PlantProvider({ children }) {
 
   async function loadStoredData() {
     try {
+      if (API_CONFIG.USE_BACKEND) {
+        console.log("Loading plants from backend...");
+
+        const backendPlants = await plantApi.getPlants();
+        console.log("Backend plants:", backendPlants);
+
+        const mappedPlants = backendPlants.map((plant) => ({
+          id: String(plant.id),
+          name: plant.name,
+          type: plant.type || "Комнатное растение",
+          location: plant.location || "Не указано",
+          status: "normal",
+          statusText: "Норма",
+          deviceId: plant.devices?.[0]?.deviceCode || null,
+          telemetry: {
+            soilMoisture: plant.telemetry?.[0]?.soilMoisture || 0,
+            temperature: plant.telemetry?.[0]?.temperature || 0,
+            light: plant.telemetry?.[0]?.light || 0,
+          },
+          telemetryHistory: [],
+          recommendation:
+            "Данные растения загружены с backend. Рекомендации будут подключены следующим этапом.",
+        }));
+
+        setPlants(mappedPlants);
+        setDevices(mockDevices);
+        return;
+      }
+
       const storedPlants = await localStorageService.getPlants();
       const storedDevices = await localStorageService.getDevices();
 
@@ -60,7 +91,36 @@ export function PlantProvider({ children }) {
     }
   }
 
-  function addPlant(plantData) {
+  async function addPlant(plantData) {
+    if (API_CONFIG.USE_BACKEND) {
+      const createdPlant = await plantApi.createPlant({
+        name: plantData.name,
+        type: plantData.type || "Комнатное растение",
+        location: plantData.location || "Не указано",
+      });
+
+      const newPlant = {
+        id: String(createdPlant.id),
+        name: createdPlant.name,
+        type: createdPlant.type || "Комнатное растение",
+        location: createdPlant.location || "Не указано",
+        status: "normal",
+        statusText: "Норма",
+        deviceId: null,
+        telemetry: {
+          soilMoisture: 0,
+          temperature: 0,
+          light: 0,
+        },
+        telemetryHistory: [],
+        recommendation:
+          "Растение добавлено через backend. Для получения показателей подключите ESP32-устройство.",
+      };
+
+      setPlants((currentPlants) => [newPlant, ...currentPlants]);
+      return;
+    }
+
     const newPlant = {
       id: `plant-${Date.now()}`,
       name: plantData.name,

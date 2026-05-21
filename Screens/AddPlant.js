@@ -18,24 +18,29 @@ export default function AddPlant({ navigation }) {
   const { showNotification } = useNotification();
   const { addPlant } = usePlants();
 
-function savePlant() {
+async function savePlant() {
   if (!name.trim()) {
     showNotification("Введите название растения", "error");
     return;
   }
 
-  addPlant({
-    name: name.trim(),
-    type: type.trim(),
-    location: location.trim(),
-  });
+  try {
+    await addPlant({
+      name: name.trim(),
+      type: type.trim(),
+      location: location.trim(),
+    });
 
-  showNotification(
-    "Растение добавлено. Данные сохраняются локально на устройстве.",
-    "success"
-  );
+    showNotification(
+      "Растение добавлено. Данные сохранены через backend.",
+      "success"
+    );
 
-  navigation.navigate("Dashboard");
+    navigation.navigate("Dashboard");
+  } catch (error) {
+    console.log("Failed to add plant:", error);
+    showNotification("Не удалось добавить растение через backend", "error");
+  }
 }
 
   return (
